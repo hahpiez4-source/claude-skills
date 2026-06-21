@@ -1,0 +1,20 @@
+{
+  "name": "claude-skills",
+  "description": "Каталог проверенных скиллов Claude Code (ссылки, не копии).",
+  "owner": {
+    "name": "hahpiez4-source"
+  },
+  "plugins": [
+    {
+      "name": "superpowers",
+      "description": "Методология разработки: брейншторм → план → TDD → ревью.",
+      "source": {
+        "source": "url",
+        "url": "https://github.com/obra/superpowers.git",
+        "sha": "896224c4b1879920ab573417e68fd51d2ccc9072"
+      },
+      "category": "development",
+      "homepage": "https://github.com/obra/superpowers"
+    }
+  ]
+}
