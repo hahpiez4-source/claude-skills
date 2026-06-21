@@ -4,6 +4,9 @@ from __future__ import annotations
 from pathlib import Path
 import re
 import yaml
+import json
+import sys
+import argparse
 
 _SOURCE_RE = re.compile(r"^[\w.-]+/[\w.-]+$")
 _SHA_RE = re.compile(r"^[0-9a-f]{7,40}$")
@@ -122,3 +125,57 @@ def build_readme(entries: list) -> str:
         for e in sorted(entries, key=lambda e: (e.get("category", "other"), e["name"]))
     ]
     return README_HEADER + "\n".join(rows) + "\n"
+
+
+def load_entries(entries_dir: Path, root: Path) -> list:
+    """Парсит и валидирует все entries/*.md (кроме _*); бросает SystemExit с ошибками."""
+    entries, errors, seen = [], [], set()
+    for p in sorted(Path(entries_dir).glob("*.md")):
+        if p.name.startswith("_"):
+            continue
+        e = parse_entry(p)
+        errs = validate_entry(e, seen)
+        if errs:
+            errors.extend(errs)
+        else:
+            entries.append(e)
+    if errors:
+        raise SystemExit("Ошибки валидации карточек:\n  - " + "\n  - ".join(errors))
+    return entries
+
+
+def run(root, check: bool = False) -> int:
+    """Генерирует контент; при check=False пишет файлы (returns 0); при check=True сравнивает с диском."""
+    root = Path(root)
+    entries = load_entries(root / "entries", root)
+    mp_text = json.dumps(build_marketplace(entries), ensure_ascii=False, indent=2) + "\n"
+    readme_text = build_readme(entries)
+    targets = {
+        root / ".claude-plugin" / "marketplace.json": mp_text,
+        root / "README.md": readme_text,
+    }
+    if check:
+        drift = [str(path) for path, text in targets.items()
+                 if not path.exists() or path.read_text("utf-8") != text]
+        if drift:
+            print("Рассинхрон (запусти build.py без --check):\n  " + "\n  ".join(drift))
+            return 1
+        return 0
+    for path, text in targets.items():
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(text, encoding="utf-8")
+        print(f"Записал {path}")
+    return 0
+
+
+def main(argv=None) -> int:
+    """CLI-обёртка с поддержкой --check."""
+    ap = argparse.ArgumentParser(description="Сборщик каталога claude-skills")
+    ap.add_argument("--check", action="store_true",
+                    help="проверить актуальность сгенерированных файлов без записи")
+    args = ap.parse_args(argv)
+    return run(Path(__file__).parent, check=args.check)
+
+
+if __name__ == "__main__":
+    sys.exit(main())
