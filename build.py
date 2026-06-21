@@ -85,3 +85,40 @@ def build_marketplace(entries: list) -> dict:
         "owner": {"name": "hahpiez4-source"},
         "plugins": plugins,
     }
+
+
+README_HEADER = """# claude-skills
+
+Каталог проверенных скиллов/плагинов для Claude Code. Здесь только **ссылки на оригиналы**, не копии кода.
+
+## Установка
+
+```bash
+claude plugin marketplace add hahpiez4-source/claude-skills
+claude plugin install <имя-скилла>@claude-skills
+```
+
+## Каталог
+
+<!-- Таблица сгенерирована build.py. Руками не редактировать. -->
+
+| Скилл | Категория | Зачем | Юзкейсы | Проверка | Источник |
+|---|---|---|---|---|---|
+"""
+
+
+def _readme_row(e: dict) -> str:
+    use = "; ".join(e.get("usecases", []) or [])
+    sec = "✅ clean" if (e.get("security") or {}).get("prompt_injection") == "clean" else "⚠️"
+    link = f"[{e['source']}](https://github.com/{e['source']})"
+    why = str(e["why"]).replace("|", "\\|")
+    use = use.replace("|", "\\|")
+    return f"| {e['name']} | {e.get('category', 'other')} | {why} | {use} | {sec} | {link} |"
+
+
+def build_readme(entries: list) -> str:
+    rows = [
+        _readme_row(e)
+        for e in sorted(entries, key=lambda e: (e.get("category", "other"), e["name"]))
+    ]
+    return README_HEADER + "\n".join(rows) + "\n"
