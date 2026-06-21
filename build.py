@@ -2,7 +2,11 @@
 from __future__ import annotations
 
 from pathlib import Path
+import re
 import yaml
+
+_SOURCE_RE = re.compile(r"^[\w.-]+/[\w.-]+$")
+_SHA_RE = re.compile(r"^[0-9a-f]{7,40}$")
 
 
 def parse_entry(path) -> dict:
@@ -19,3 +23,38 @@ def parse_entry(path) -> dict:
         raise ValueError(f"{path.name}: frontmatter должен быть набором полей")
     data["_name"] = path.stem
     return data
+
+
+def validate_entry(entry: dict, seen_names: set) -> list:
+    """Валидировать карточку, мутировать seen_names, вернуть список ошибок."""
+    name = entry.get("_name", "?")
+    errs = []
+
+    def need(field):
+        if not entry.get(field):
+            errs.append(f"{name}: отсутствует обязательное поле '{field}'")
+
+    for f in ("name", "source", "pin", "why"):
+        need(f)
+
+    src = entry.get("source", "")
+    if src and not _SOURCE_RE.match(str(src)):
+        errs.append(f"{name}: source должен быть вида 'owner/repo', получено '{src}'")
+
+    pin = str(entry.get("pin", ""))
+    if pin and not _SHA_RE.match(pin):
+        errs.append(f"{name}: pin должен быть коммитом (7–40 hex), а не веткой: '{pin}'")
+
+    sec = entry.get("security") or {}
+    if not isinstance(sec, dict) or not sec.get("reviewed_by"):
+        errs.append(f"{name}: отсутствует security.reviewed_by")
+    if (sec.get("prompt_injection") if isinstance(sec, dict) else None) != "clean":
+        errs.append(f"{name}: security.prompt_injection должен быть 'clean' для попадания в каталог")
+
+    nm = entry.get("name")
+    if nm:
+        if nm in seen_names:
+            errs.append(f"{name}: дубликат имени '{nm}'")
+        seen_names.add(nm)
+
+    return errs
