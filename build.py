@@ -58,3 +58,30 @@ def validate_entry(entry: dict, seen_names: set) -> list:
         seen_names.add(nm)
 
     return errs
+
+
+def _plugin_obj(entry: dict) -> dict:
+    """Преобразовать entry в объект плагина для marketplace.json."""
+    owner_repo = entry["source"]
+    return {
+        "name": entry["name"],
+        "description": entry["why"],
+        "source": {
+            "source": "url",
+            "url": f"https://github.com/{owner_repo}.git",
+            "sha": str(entry["pin"]),
+        },
+        "category": entry.get("category", "other"),
+        "homepage": f"https://github.com/{owner_repo}",
+    }
+
+
+def build_marketplace(entries: list) -> dict:
+    """Собрать полный объект marketplace.json из списка карточек."""
+    plugins = [_plugin_obj(e) for e in sorted(entries, key=lambda e: e["name"])]
+    return {
+        "name": "claude-skills",
+        "description": "Каталог проверенных скиллов Claude Code (ссылки, не копии).",
+        "owner": {"name": "hahpiez4-source"},
+        "plugins": plugins,
+    }
