@@ -12,8 +12,8 @@ security:
   reviewed_by: твой-github-логин
   reviewed_commit: <тот же sha, что pin>
   date: 2026-06-21
-  prompt_injection: clean
-  notes: "Что проверил."
+  prompt_injection: TODO-set-clean-only-after-review
+  notes: "Замени prompt_injection на clean только после проверки по docs/security-checklist.md."
 ---
 
 # Название

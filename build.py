@@ -12,6 +12,11 @@ _SOURCE_RE = re.compile(r"^[\w.-]+/[\w.-]+$")
 _SHA_RE = re.compile(r"^[0-9a-f]{7,40}$")
 
 
+def _esc(text: str) -> str:
+    """Экранировать символ | для безопасного использования в ячейках Markdown-таблицы."""
+    return str(text).replace("|", "\\|")
+
+
 def parse_entry(path) -> dict:
     """Прочитать карточку: вернуть dict frontmatter + ключ _name (имя файла)."""
     path = Path(path)
@@ -51,7 +56,7 @@ def validate_entry(entry: dict, seen_names: set) -> list:
     sec = entry.get("security") or {}
     if not isinstance(sec, dict) or not sec.get("reviewed_by"):
         errs.append(f"{name}: отсутствует security.reviewed_by")
-    if (sec.get("prompt_injection") if isinstance(sec, dict) else None) != "clean":
+    if sec.get("prompt_injection") != "clean":
         errs.append(f"{name}: security.prompt_injection должен быть 'clean' для попадания в каталог")
 
     nm = entry.get("name")
@@ -113,10 +118,9 @@ claude plugin install <имя-скилла>@claude-skills
 def _readme_row(e: dict) -> str:
     use = "; ".join(e.get("usecases", []) or [])
     sec = "✅ clean" if (e.get("security") or {}).get("prompt_injection") == "clean" else "⚠️"
-    link = f"[{e['source']}](https://github.com/{e['source']})"
-    why = str(e["why"]).replace("|", "\\|")
-    use = use.replace("|", "\\|")
-    return f"| {e['name']} | {e.get('category', 'other')} | {why} | {use} | {sec} | {link} |"
+    src = e["source"]
+    link = f"[{_esc(src)}](https://github.com/{_esc(src)})"
+    return f"| {_esc(e['name'])} | {_esc(e.get('category', 'other'))} | {_esc(e['why'])} | {_esc(use)} | {sec} | {link} |"
 
 
 def build_readme(entries: list) -> str:
@@ -127,7 +131,7 @@ def build_readme(entries: list) -> str:
     return README_HEADER + "\n".join(rows) + "\n"
 
 
-def load_entries(entries_dir: Path, root: Path) -> list:
+def load_entries(entries_dir: Path) -> list:
     """Парсит и валидирует все entries/*.md (кроме _*); бросает SystemExit с ошибками."""
     entries, errors, seen = [], [], set()
     for p in sorted(Path(entries_dir).glob("*.md")):
@@ -147,7 +151,7 @@ def load_entries(entries_dir: Path, root: Path) -> list:
 def run(root, check: bool = False) -> int:
     """Генерирует контент; при check=False пишет файлы (returns 0); при check=True сравнивает с диском."""
     root = Path(root)
-    entries = load_entries(root / "entries", root)
+    entries = load_entries(root / "entries")
     mp_text = json.dumps(build_marketplace(entries), ensure_ascii=False, indent=2) + "\n"
     readme_text = build_readme(entries)
     targets = {
