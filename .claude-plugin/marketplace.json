@@ -6,6 +6,28 @@
   },
   "plugins": [
     {
+      "name": "claude-ffmpeg-skill",
+      "description": "Чистая обёртка ffmpeg: ресайз, склейка, субтитры, кадры — без облака.",
+      "source": {
+        "source": "url",
+        "url": "https://github.com/ychoi-kr/claude-ffmpeg-skill.git",
+        "sha": "b88cb5ce08337ab55c66c67674100b8de29cf232"
+      },
+      "category": "video",
+      "homepage": "https://github.com/ychoi-kr/claude-ffmpeg-skill"
+    },
+    {
+      "name": "clipify",
+      "description": "Длинное видео → клипы 9:16 с караоке-субтитрами, полностью локально.",
+      "source": {
+        "source": "url",
+        "url": "https://github.com/louisedesadeleer/clipify.git",
+        "sha": "621855bdc0ea67c40d872ffb8f216f5f10c7bc73"
+      },
+      "category": "video",
+      "homepage": "https://github.com/louisedesadeleer/clipify"
+    },
+    {
       "name": "superpowers",
       "description": "Методология разработки: брейншторм → план → TDD → ревью.",
       "source": {
@@ -15,6 +37,17 @@
       },
       "category": "development",
       "homepage": "https://github.com/obra/superpowers"
+    },
+    {
+      "name": "transcript-critic",
+      "description": "Локальная транскрипция (whisper.cpp) видео/аудио + структурный разбор.",
+      "source": {
+        "source": "url",
+        "url": "https://github.com/jftuga/transcript-critic.git",
+        "sha": "d34ec0d6f434e9a308df43a66fb6533332d12f64"
+      },
+      "category": "video",
+      "homepage": "https://github.com/jftuga/transcript-critic"
     }
   ]
 }
